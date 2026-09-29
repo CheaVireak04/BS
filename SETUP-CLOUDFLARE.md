@@ -11,7 +11,7 @@ Takes about 30–45 minutes. Everything here is free.
 ```
 You change files on GitHub
         ↓  (Cloudflare notices automatically)
-Cloudflare Worker "brick-store"
+Cloudflare Worker "bs"
    ├─ shows the website (the files in the "public" folder)
    └─ /api/orders  → checks the order → Telegram bot → your chat
 ```
@@ -65,11 +65,11 @@ On the GitHub website:
 2. Click **Create** → **Import a repository** (or **Connect to Git**). Choose **GitHub**.
 3. GitHub asks for permission. Allow access to **only your BRICK STORE repository**.
 4. Choose the repository and the main branch.
-5. **Project / Worker name:** type exactly `brick-store`. It must match the name inside `wrangler.jsonc`, or the build fails.
+5. **Project / Worker name:** type exactly `bs`. It must match the name inside `wrangler.jsonc`, or the build fails.
 6. **Build command:** leave empty.
    **Deploy command:** `npx wrangler deploy` (usually filled in already).
 7. Click **Deploy** (or **Save and Deploy**) and wait 1–2 minutes.
-8. You get a free address like **`https://brick-store.YOUR-NAME.workers.dev`**. Open it. You should see your store.
+8. You get a free address like **`https://bs.YOUR-NAME.workers.dev`**. Open it. You should see your store.
 
 (Button names may be slightly different — Cloudflare changes its dashboard sometimes. The idea stays the same.)
 
@@ -103,7 +103,7 @@ The simplest choice is to use your existing store bot, **@BrickStoreApp_bot**, a
 
 **What this does:** stores the password where only the Worker can read it.
 
-1. Cloudflare → **Workers & Pages** → **brick-store** → **Settings** → **Variables and Secrets** → **Add**.
+1. Cloudflare → **Workers & Pages** → **bs** → **Settings** → **Variables and Secrets** → **Add**.
 2. Type: **Secret** · Name: `TELEGRAM_BOT_TOKEN` · Value: your token.
 3. Click **Add** again. Type: **Secret** · Name: `TELEGRAM_CHAT_ID` · Value: your chat ID.
 4. Click **Deploy** (or **Save**).
@@ -116,7 +116,7 @@ Names must be typed **exactly** like that, in capital letters with underscores.
 
 ## Step 6 — Check the settings
 
-Open `https://brick-store.YOUR-NAME.workers.dev/api/health` in your browser. You should see:
+Open `https://bs.YOUR-NAME.workers.dev/api/health` in your browser. You should see:
 
 ```
 "botTokenSet":true, "chatIdSet":true, "productsLoaded":10
@@ -130,7 +130,7 @@ It only says *whether* the settings exist. It never shows their values. If somet
 
 **What this does:** makes the bot open the Cloudflare version instead of GitHub Pages.
 
-1. **@BotFather** → send `/myapps` → choose your app (**Homepage**) → **Edit Web App URL** → paste `https://brick-store.YOUR-NAME.workers.dev`.
+1. **@BotFather** → send `/myapps` → choose your app (**Homepage**) → **Edit Web App URL** → paste `https://bs.YOUR-NAME.workers.dev`.
 2. If your bot also has a **Menu Button** that opens the store: `/mybots` → **@BrickStoreApp_bot** → **Bot Settings** → **Menu Button** → set the same address.
 3. Close the Mini App completely and open it again.
 
@@ -148,7 +148,7 @@ It only says *whether* the settings exist. It never shows their values. If somet
 - Step 6 shows `true` for both settings.
 - You pressed **Start** on the bot (Step 4).
 - For a group: the bot is still a member.
-- Cloudflare → **brick-store** → **Logs** shows the reason (for example "chat not found"). The token is never printed there.
+- Cloudflare → **bs** → **Logs** shows the reason (for example "chat not found"). The token is never printed there.
 
 ---
 
@@ -158,4 +158,4 @@ It only says *whether* the settings exist. It never shows their values. If somet
 - **Old GitHub Pages site:** once you've tested for a few days, you can turn it off: GitHub → repository → **Settings → Pages** → **Unpublish** or set **Source** to **None**.
 - **Google Maps:** if you restricted your Maps key to certain websites, add your new `workers.dev` address in Google Cloud Console → **APIs & Services → Credentials**.
 - **Only-Telegram orders (extra spam protection):** in `wrangler.jsonc`, change `"REQUIRE_TELEGRAM_USER": "false"` to `"true"`. After that, orders placed from a normal web browser are refused.
-- **Your own domain later (optional):** Cloudflare → **brick-store** → **Settings → Domains & Routes → Add → Custom domain**. Then update the BotFather URL again.
+- **Your own domain later (optional):** Cloudflare → **bs** → **Settings → Domains & Routes → Add → Custom domain**. Then update the BotFather URL again.

@@ -90,7 +90,7 @@ Open `public/store-config.js`:
 3. Cloudflare notices the change and puts it online by itself within 1–2 minutes.
 4. Close the Mini App in Telegram and open it again to see the new version.
 
-If the new version doesn't appear: Cloudflare → **Workers & Pages → brick-store → Deployments** shows whether the last update worked. A red ❌ usually means a missing comma or quote mark in the file you just edited.
+If the new version doesn't appear: Cloudflare → **Workers & Pages → bs → Deployments** shows whether the last update worked. A red ❌ usually means a missing comma or quote mark in the file you just edited.
 
 ## 4. Undo everything
 The very first version of the store is saved in `_backup_original` on your computer (it is not on GitHub).
