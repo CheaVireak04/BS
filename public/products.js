@@ -46,7 +46,7 @@ const products = [
         desc: "Premium replica desk toy. Deep sapphire phases.",
         dateAdded: "2026-03-01", clicks: 450, sales: 85,
         tags: ["knife", "doppler", "sapphire", "curved", "blue"],
-        variants: [{ name: "Standard Phase 3", price: 12 }, { name: "Sapphire Edition", price: 18 }]
+        variants: [{ name: "White", price: 75.99 }, { name: "Orange", price: 75.99 }]
     },
     {
         id: 2, category: "Fixed blade", name: "Floppy Magnetic Power Bank", price: 55.99, oldPrice: 69.99,
@@ -55,7 +55,7 @@ const products = [
         desc: "Premium replica desk toy. 100% fade pattern.",
         dateAdded: "2026-03-02", clicks: 600, sales: 120,
         tags: ["knife", "fade", "gradient", "curved"],
-        variants: [{ name: "90% Fade", price: 12 }, { name: "100% Full Fade", price: 20 }]
+        
     },
     {
         id: 3, category: "Fixed blade", name: "M9 Bayonet Crimson Web", price: 12, oldPrice: 15,
