@@ -79,19 +79,19 @@ On the GitHub website:
 
 **Bot token = the bot's password. Chat ID = the address the orders are sent to.**
 
-The simplest choice is to use your existing store bot, **@BrickStoreApp_bot**, as the order bot too. Then there's only one token.
+The simplest choice is to use your existing store bot, **@BrickMini_bot**, as the order bot too. Then there's only one token.
 
 **Token:**
 1. In Telegram, open **@BotFather**.
-2. Send `/mybots` → choose **@BrickStoreApp_bot** → **API Token**.
+2. Send `/mybots` → choose **@BrickMini_bot** → **API Token**.
 3. Copy it. Keep it secret.
 
 **Chat ID (orders go to your own Telegram):**
-1. Open **@BrickStoreApp_bot** and press **Start**. A bot can only message people who have pressed Start.
+1. Open **@BrickMini_bot** and press **Start**. A bot can only message people who have pressed Start.
 2. Open **@userinfobot** and press **Start**. It replies with your **Id** (a number like `123456789`). Copy it.
 
 **Chat ID for a group instead (optional):**
-1. Create the group and add **@BrickStoreApp_bot** as a member. Send any message in the group.
+1. Create the group and add **@BrickMini_bot** as a member. Send any message in the group.
 2. On your own computer, open this in your browser (replace `<TOKEN>` with your token):
    `https://api.telegram.org/bot<TOKEN>/getUpdates`
 3. Look for `"chat":{"id":-100…`. That negative number (starting with `-100`) is the group's chat ID.
@@ -110,7 +110,7 @@ The simplest choice is to use your existing store bot, **@BrickStoreApp_bot**, a
 
 Names must be typed **exactly** like that, in capital letters with underscores.
 
-*Only if the order bot is a different bot from @BrickStoreApp_bot:* also add a Secret `MINI_APP_BOT_TOKEN` with @BrickStoreApp_bot's token. Without it, orders still arrive, but they are marked "not verified".
+*Only if the order bot is a different bot from @BrickMini_bot:* also add a Secret `MINI_APP_BOT_TOKEN` with @BrickMini_bot's token. Without it, orders still arrive, but they are marked "not verified".
 
 ---
 
@@ -131,14 +131,14 @@ It only says *whether* the settings exist. It never shows their values. If somet
 **What this does:** makes the bot open the Cloudflare version instead of GitHub Pages.
 
 1. **@BotFather** → send `/myapps` → choose your app (**Homepage**) → **Edit Web App URL** → paste `https://bs.YOUR-NAME.workers.dev`.
-2. If your bot also has a **Menu Button** that opens the store: `/mybots` → **@BrickStoreApp_bot** → **Bot Settings** → **Menu Button** → set the same address.
+2. If your bot also has a **Menu Button** that opens the store: `/mybots` → **@BrickMini_bot** → **Bot Settings** → **Menu Button** → set the same address.
 3. Close the Mini App completely and open it again.
 
 ---
 
 ## Step 8 — Test one real order
 
-1. Open the store **inside Telegram** from @BrickStoreApp_bot.
+1. Open the store **inside Telegram** from @BrickMini_bot.
 2. Add something to the cart → **Checkout** → your name is filled in from Telegram → type a phone number → choose **Store pickup** → type "TEST ORDER" as the note → **Place order**.
 3. You should see **Order received** and a number like `BRICK-260929-7K2QX`.
 4. Your chat (or group) should get **🛍️ NEW ORDER #BRICK-…** with ✅ verified.

@@ -45,7 +45,7 @@ const STORE_CONFIG = {
     supportUsername: "Chea_Vireak",       // your Telegram username (also shown in Contact us)
 
     // ---------- "Share App" button ----------
-    shareLink: "https://t.me/BrickStoreApp_bot/Homepage",
+    shareLink: "https://t.me/BrickMini_bot",
     shareText: "Check out BRICK STORE!",
 
     // ---------- About section (in the right-side menu) ----------
