@@ -24,7 +24,7 @@ const STORE_CONFIG = {
     // ---------- Home page top section ("hero") ----------
     // Placeholder text. Replace it when you decide what you sell.
     heroEyebrow: "",                             // optional small line above the big title, e.g. "New season"
-    heroTitle: "Welcome to BRICK STORE",         // the big title
+    heroTitle: "Welcome to REAK 2026",         // the big title
     heroSubtitle: "Browse the collection and order in a few taps.",
     heroImage: "",                               // optional banner photo link, e.g. "hero-banner.jpg". Leave "" for no image.
 
