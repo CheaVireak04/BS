@@ -49,7 +49,7 @@ const products = [
         variants: [{ name: "Standard Phase 3", price: 12 }, { name: "Sapphire Edition", price: 18 }]
     },
     {
-        id: 2, category: "Fixed blade", name: "Floppy Magnetic Power Bank", price: 55.99, oldPrice: 69.99​,
+        id: 2, category: "Fixed blade", name: "Floppy Magetic Power Bank", price: 55.99,  oldPrice: 69.99​,
         image: "https://trozk.com/cdn/shop/files/5_8060d2c9-4fd5-4c90-ad3c-02cbb278dad3.jpg?v=1766902510&width=2000",
         gallery: ["https://trozk.com/cdn/shop/files/5_8060d2c9-4fd5-4c90-ad3c-02cbb278dad3.jpg?v=1766902510&width=2000"],
         desc: "Premium replica desk toy. 100% fade pattern.",
