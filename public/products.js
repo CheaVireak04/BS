@@ -40,7 +40,7 @@
 
 const products = [
     {
-        id: 1, category: "Fixed blade", name: "BHQ ក្តិតធំ (តម្លៃគិតក្នុង១យប់)", price: 12, oldPrice: 15,
+        id: 1, category: "Fixed blade", name: "BHQ ក្តិតធំ(តម្លៃគិតក្នុង១យប់)", price: 12, oldPrice: 15,
         image: "assets/Lux.JPEG",
         gallery: ["assets/Lux.JPEG"],
         desc: "Premium replica desk toy. Deep sapphire phases.",
@@ -49,7 +49,7 @@ const products = [
         variants: [{ name: "Standard Phase 3", price: 12 }, { name: "Sapphire Edition", price: 18 }]
     },
     {
-        id: 2, category: "Fixed blade", name: "បុរសសាច់ដុំ (តម្លៃគិតក្នុង១យប់)", price: 12, oldPrice: 15​,
+        id: 2, category: "Fixed blade", name: "បុរសសាច់ដុំ(តម្លៃគិតក្នុង១យប់)", price: 12, oldPrice: 15​,
         image: "assets/Lork.PNG",
         gallery: ["assets/Lork.PNG"],
         desc: "Premium replica desk toy. 100% fade pattern.",
