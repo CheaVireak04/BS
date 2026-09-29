@@ -1,0 +1,36 @@
+// ============================================================
+//  BRICK STORE — Cloudflare settings (safe to keep on GitHub: NO passwords in here)
+// ============================================================
+//  - "name" must be exactly the same as the Worker's name in your Cloudflare dashboard.
+//  - The bot token and chat ID are NOT here. Add them in the Cloudflare dashboard as "Secret".
+// ============================================================
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "brick-store",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+
+  // The website files. ONLY files inside the "public" folder can be seen by visitors.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // Keep settings you add in the Cloudflare dashboard (like the chat ID) when a new version is deployed.
+  "keep_vars": true,
+
+  // Simple switches (not secret):
+  "vars": {
+    // "true" = only accept orders from people who opened the store inside Telegram.
+    "REQUIRE_TELEGRAM_USER": "false",
+    // Only needed if the website is hosted somewhere else than this Worker, e.g. "https://www.mystore.com"
+    "ALLOWED_ORIGINS": ""
+  },
+
+  // Error messages appear in Cloudflare → Workers → brick-store → Logs.
+  // "traces" stay OFF on purpose: they would record the Telegram address, which contains the bot token.
+  "observability": {
+    "logs": { "enabled": true, "invocation_logs": false },
+    "traces": { "enabled": false }
+  }
+}

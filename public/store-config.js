@@ -32,8 +32,17 @@ const STORE_CONFIG = {
     currencySymbol: "$",                 // shown before every price
 
     // ---------- Where orders are sent ----------
-    // Orders open a Telegram chat with this username, with the order already typed.
-    supportUsername: "Chea_Vireak",
+    // Orders are sent automatically by the secure order server (the "worker" folder)
+    // to your Telegram bot. The bot password is NOT here — it is kept secret in Cloudflare.
+    orderApiUrl: "/api/orders",
+
+    // Shown to the customer after the order was received.
+    orderSuccessText: "The shop has received your order and will contact you to confirm it.",
+
+    // Backup plan: if the order server can't be reached, offer the customer a button to
+    // send the order as a Telegram chat message to this username instead.
+    allowChatFallback: true,
+    supportUsername: "Chea_Vireak",       // your Telegram username (also shown in Contact us)
 
     // ---------- "Share App" button ----------
     shareLink: "https://t.me/BrickStoreApp_bot/Homepage",
@@ -65,7 +74,7 @@ const STORE_CONFIG = {
     deliveryOptions: [
         { type: "standard", value: "Standard (1-2 days)",       label: "Standard delivery",  detail: "1–2 days · by delivery company to your province" },
         { type: "grab",     value: "Grab Express (Phnom Penh)", label: "Grab Express",       detail: "Phnom Penh only · pin your location on a map" },
-        { type: "pickup",   value: "Store Pickup",              label: "Store pickup",       detail: "Collect it yourself · details arranged in Telegram" }
+        { type: "pickup",   value: "Store Pickup",              label: "Store pickup",       detail: "Collect it yourself · the shop will contact you" }
     ],
 
     // ---------- Delivery companies (for Standard delivery) ----------
@@ -111,3 +120,8 @@ const STORE_CONFIG = {
     // The map only loads when a customer chooses Grab Express, so the store opens faster.
     googleMapsApiKey: "AIzaSyBZ2h_cG0r0mccTr78C9cK2-zC5rexpwik"
 };
+
+// ⚠️ DO NOT DELETE the line below.
+// It lets the secure order server read these settings (delivery options, companies, provinces)
+// so it can check orders. It does nothing in the customer's browser.
+if (typeof module !== "undefined" && module.exports) { module.exports = STORE_CONFIG; }

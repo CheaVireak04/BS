@@ -130,3 +130,8 @@ const products = [
         variants: [{ name: "Standard Edge", price: 12 }, { name: "Sharpened Edge", price: 16 }]
     }
 ];
+
+// ⚠️ DO NOT DELETE the line below.
+// It lets the secure order server (the "worker" folder) read this same product list,
+// so it can check prices when an order arrives. It does nothing in the customer's browser.
+if (typeof module !== "undefined" && module.exports) { module.exports = products; }

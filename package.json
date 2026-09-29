@@ -1,0 +1,13 @@
+{
+  "name": "brick-store",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BRICK STORE \u2014 Telegram Mini App store on Cloudflare",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.143.0"
+  }
+}

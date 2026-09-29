@@ -797,3 +797,13 @@ body[data-view="product"] .buy-bar { display: flex; }
 @media (hover: hover) and (pointer: fine) {
   .toolbar .select { font-size: var(--fs-sm); }
 }
+
+/* Order sending: error box + order number */
+.order-error { margin-bottom: var(--s3); padding: var(--s3) var(--s4); border-radius: var(--r-md); background: var(--danger-soft); color: var(--text); }
+.order-error-title { display: flex; align-items: flex-start; gap: 8px; font-weight: 600; color: var(--danger); }
+.order-error-title .icon { margin-top: 1px; }
+.order-error-detail { margin-top: 4px; font-size: var(--fs-sm); color: var(--text-2); }
+.order-error-detail:empty { display: none; }
+.order-error .btn-link { margin-top: 4px; min-height: 40px; padding: 0; }
+.order-id { font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; background: var(--surface-2); padding: 6px 12px; border-radius: var(--r-pill); }
+.btn-accent.is-loading::after { border-color: var(--on-accent) var(--on-accent) transparent transparent; }

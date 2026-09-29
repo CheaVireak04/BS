@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>BRICK STORE</title>
+    <meta name="description" content="BRICK STORE — browse the collection and order in a few taps.">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#000000">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- App icon + install info (Add to Home Screen) -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="BRICK STORE">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Telegram Mini App support (must load first) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Pick light/dark before the page paints, so it never flashes the wrong colour -->
+    <script>
+        (function () {
+            var dark;
+            try {
+                var saved = localStorage.getItem('brickTheme');
+                if (saved) dark = saved !== 'light';
+            } catch (e) {}
+            if (dark === undefined) {
+                var tgScheme = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp.colorScheme : null;
+                if (tgScheme) dark = tgScheme === 'dark';
+                else dark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            }
+            document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        })();
+    </script>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Store data and logic (order matters: settings → products → app) -->
+    <script src="store-config.js" defer></script>
+    <script src="products.js" defer></script>
+    <script src="app.js" defer></script>
+</head>
+
+<body data-view="home">
+    <!-- ================= ICONS (drawn once, reused everywhere) ================= -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+        <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 7.5h13l-1 12.5h-11z"/><path d="M9 7.5V6.5a3 3 0 016 0v1"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+        <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+        <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+        <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="2.5"/></symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17v4M17 19h4"/></symbol>
+        <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+        <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+        <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></symbol>
+        <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+        <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><path d="M16 6l-4-4-4 4M12 2v13"/></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+        <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.8 7L4 20l1.1-4.6A8 8 0 1121 12z"/></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h5"/></symbol>
+        <symbol id="i-telegram" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.99 1.26-3.95 2.58-.29.19-.55.29-.78.28-.26-.01-.76-.15-1.13-.27-.45-.15-.81-.23-.79-.49.01-.13.2-.27.56-.41 2.21-.96 3.68-1.59 4.41-1.89 2.09-.87 2.53-1.02 2.82-1.02.06 0 .2 0 .28.06.07.05.1.12.11.19-.01.07-.01.12-.02.16z"/></symbol>
+        <symbol id="i-facebook" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></symbol>
+        <symbol id="i-tiktok" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 15.68a6.34 6.34 0 006.27 6.32 6.32 6.32 0 006.16-5.33v-7.2a8.3 8.3 0 005.18 1.84V7.85a4.96 4.96 0 01-3.02-1.16z"/></symbol>
+        <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01" stroke-width="2.5"/></symbol>
+    </svg>
+
+    <a class="skip-link" href="#main">Skip to products</a>
+
+    <!-- ================= HEADER ================= -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <button class="icon-btn" type="button" onclick="app.toggleLeftPanel()" aria-label="Browse collections" aria-controls="left-panel" aria-expanded="false" id="btn-left-panel" style="margin-left:-10px">
+                <svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"/></svg>
+            </button>
+            <a class="brand" href="#" onclick="app.setCategory('home'); return false;" aria-label="BRICK STORE home" id="brand-link">
+                <span id="brand-strong">BRICK</span><span class="brand-light" id="brand-light">STORE</span>
+            </a>
+            <nav class="header-nav" id="header-nav" aria-label="Collections"></nav>
+            <div class="header-spacer"></div>
+            <button class="icon-btn" type="button" onclick="app.togglePanel()" aria-label="Menu and settings" aria-controls="side-panel" aria-expanded="false" id="btn-side-panel">
+                <svg class="icon icon-lg" aria-hidden="true"><use href="#i-more"/></svg>
+            </button>
+            <button class="icon-btn header-cart" type="button" onclick="app.navigate('cart')" aria-label="Cart" id="header-cart" style="margin-right:-10px">
+                <svg class="icon icon-lg" aria-hidden="true"><use href="#i-bag"/></svg>
+                <span class="count-badge" data-cart-badge hidden>0</span>
+            </button>
+        </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+        <!-- ================= HOME / SHOP ================= -->
+        <section id="view-home" class="view view-section active container" aria-labelledby="category-title">
+            <div id="hero"></div>
+
+            <div class="shop-controls">
+                <div class="search" role="search">
+                    <label for="searchInput" class="sr-only">Search products</label>
+                    <svg class="icon search-icon" aria-hidden="true"><use href="#i-search"/></svg>
+                    <input type="search" id="searchInput" class="input search-input" placeholder="Search products"
+                           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+                           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions"
+                           oninput="app.handleSearch(event)" onkeydown="app.onSearchKeydown(event)" onfocus="app.handleSearch(event)">
+                    <button type="button" class="icon-btn search-clear" id="search-clear" onclick="app.clearSearch()" aria-label="Clear search" hidden>
+                        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                    </button>
+                    <ul id="search-suggestions" class="suggestions" role="listbox" aria-label="Suggestions" hidden></ul>
+                </div>
+
+                <div class="chip-row" id="collection-chips" role="group" aria-label="Collections"></div>
+
+                <div class="toolbar">
+                    <p class="results-count" id="results-count" aria-live="polite"></p>
+                    <button type="button" class="chip filter-btn" id="filter-btn" onclick="app.openFilters()" aria-haspopup="dialog">
+                        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-sliders"/></svg>
+                        Filters <span class="dot" id="filter-count" hidden></span>
+                    </button>
+                    <label for="sort-select" class="sr-only">Sort products</label>
+                    <select id="sort-select" class="select" onchange="app.setSort(this.value)">
+                        <option value="featured">Featured</option>
+                        <option value="newest">Newest</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                        <option value="popular">Most popular</option>
+                        <option value="bestselling">Best selling</option>
+                    </select>
+                </div>
+
+                <div class="active-filters" id="active-filters" hidden></div>
+            </div>
+
+            <div class="section-head">
+                <h1 class="section-title" id="category-title" tabindex="-1">All products</h1>
+            </div>
+            <div id="product-grid" class="grid">
+                <!-- Loading placeholders, replaced as soon as products are ready -->
+                <div class="card skeleton-card" aria-hidden="true"><div class="card-media skeleton"></div><div class="skeleton skeleton-line" style="width:80%"></div><div class="skeleton skeleton-line" style="width:40%"></div></div>
+                <div class="card skeleton-card" aria-hidden="true"><div class="card-media skeleton"></div><div class="skeleton skeleton-line" style="width:70%"></div><div class="skeleton skeleton-line" style="width:35%"></div></div>
+                <div class="card skeleton-card" aria-hidden="true"><div class="card-media skeleton"></div><div class="skeleton skeleton-line" style="width:75%"></div><div class="skeleton skeleton-line" style="width:45%"></div></div>
+                <div class="card skeleton-card" aria-hidden="true"><div class="card-media skeleton"></div><div class="skeleton skeleton-line" style="width:65%"></div><div class="skeleton skeleton-line" style="width:40%"></div></div>
+            </div>
+            <noscript><p class="state-text" style="margin:24px auto;text-align:center">Please turn on JavaScript to use this store.</p></noscript>
+        </section>
+
+        <!-- ================= PRODUCT DETAIL ================= -->
+        <section id="view-product" class="view view-section container" hidden>
+            <button type="button" class="back-link" onclick="app.goBack()">
+                <svg class="icon" aria-hidden="true"><use href="#i-chev-left"/></svg> Back
+            </button>
+            <div id="product-detail-content"></div>
+        </section>
+
+        <!-- ================= CART ================= -->
+        <section id="view-cart" class="view view-section container" hidden aria-labelledby="cart-title">
+            <div id="cart-content"></div>
+        </section>
+    </main>
+
+    <!-- Sticky buy bar (phones, product page only) -->
+    <div class="buy-bar" id="buy-bar">
+        <div class="buy-bar-price"><small>Price</small><strong id="buybar-price"></strong></div>
+        <button type="button" class="btn btn-secondary" id="buybar-add" onclick="app.addFromDetail(event)">Add to cart</button>
+        <button type="button" class="btn btn-primary" id="buybar-buy" onclick="app.buyNowFromDetail()">Buy now</button>
+    </div>
+
+    <!-- ================= BOTTOM TAB BAR (phones) ================= -->
+    <nav class="tabbar" aria-label="Main">
+        <div class="tabbar-inner">
+            <button type="button" class="tab" id="nav-home" onclick="app.goHome()" aria-current="page">
+                <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>
+                <span>Shop</span>
+            </button>
+            <button type="button" class="tab" id="nav-cart" onclick="app.navigate('cart')">
+                <svg class="icon" aria-hidden="true"><use href="#i-bag"/></svg>
+                <span>Cart</span>
+                <span class="count-badge" id="cart-badge" data-cart-badge hidden>0</span>
+            </button>
+            <button type="button" class="tab" id="nav-menu" onclick="app.togglePanel()">
+                <svg class="icon" aria-hidden="true"><use href="#i-more"/></svg>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ================= LEFT DRAWER: BROWSE ================= -->
+    <div id="left-panel-overlay" class="overlay" onclick="app.toggleLeftPanel()" hidden></div>
+    <nav id="left-panel" class="drawer drawer-left" role="dialog" aria-modal="true" aria-labelledby="left-panel-title" aria-hidden="true">
+        <div class="drawer-head">
+            <h2 class="drawer-title" id="left-panel-title">Browse</h2>
+            <button type="button" class="icon-btn" onclick="app.toggleLeftPanel()" aria-label="Close">
+                <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+            </button>
+        </div>
+        <div class="drawer-body">
+            <div class="drawer-section">
+                <p class="drawer-label">Collections</p>
+                <div id="left-collections"></div>
+            </div>
+            <div class="drawer-section" id="left-categories-section" hidden>
+                <p class="drawer-label">Categories</p>
+                <div id="left-categories"></div>
+            </div>
+            <div class="drawer-section">
+                <button type="button" class="btn btn-secondary btn-block" onclick="app.shareApp()">
+                    <svg class="icon" aria-hidden="true"><use href="#i-share"/></svg> Share App
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= RIGHT DRAWER: MENU ================= -->
+    <div id="panel-overlay" class="overlay" onclick="app.togglePanel()" hidden></div>
+    <aside id="side-panel" class="drawer drawer-right" role="dialog" aria-modal="true" aria-labelledby="side-panel-title" aria-hidden="true">
+        <div class="drawer-head">
+            <h2 class="drawer-title" id="side-panel-title">Menu</h2>
+            <button type="button" class="icon-btn" onclick="app.togglePanel()" aria-label="Close">
+                <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+            </button>
+        </div>
+        <div class="drawer-body">
+            <div class="drawer-section">
+                <p class="drawer-label">Appearance</p>
+                <button type="button" class="menu-item" role="switch" aria-checked="true" id="theme-switch" onclick="app.toggleTheme()">
+                    <svg class="icon" aria-hidden="true"><use href="#i-moon"/></svg>
+                    Dark mode
+                    <span class="switch" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="drawer-section">
+                <p class="drawer-label">About us</p>
+                <p class="about-text" id="about-text"></p>
+            </div>
+            <div class="drawer-section">
+                <p class="drawer-label">Contact us</p>
+                <div id="contact-links"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ================= FILTER SHEET ================= -->
+    <div id="filter-sheet" class="sheet-wrap" hidden>
+        <div class="overlay" onclick="app.closeFilters()"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+            <div class="sheet-head">
+                <h2 class="sheet-title" id="filter-title">Filters</h2>
+                <button type="button" class="icon-btn" onclick="app.closeFilters()" aria-label="Close filters">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <div class="sheet-body">
+                <div class="filter-group" id="category-filter-group" hidden>
+                    <h3 class="filter-title">Category</h3>
+                    <div class="chip-wrap" id="filter-categories" role="radiogroup" aria-label="Category"></div>
+                </div>
+                <div class="filter-group" id="price-filter-group">
+                    <h3 class="filter-title" id="price-label">Price range</h3>
+                    <div class="price-values"><span id="price-min-label"></span><span id="price-max-label"></span></div>
+                    <span id="priceValue" class="sr-only"></span>
+                    <div class="dual-slider-container">
+                        <div id="slider-track" class="dual-slider-track" style="left:0%;right:0%"></div>
+                        <input type="range" id="minPriceRange" class="dual-slider" min="0" max="1000" value="0" step="1" aria-label="Minimum price" oninput="app.handlePriceFilter('min')">
+                        <input type="range" id="maxPriceRange" class="dual-slider" min="0" max="1000" value="1000" step="1" aria-label="Maximum price" oninput="app.handlePriceFilter('max')">
+                    </div>
+                </div>
+                <p class="field-hint" id="no-filters-hint" hidden>There is nothing to filter yet — all products are in one category and have the same price.</p>
+            </div>
+            <div class="sheet-foot">
+                <div class="filter-actions">
+                    <button type="button" class="btn btn-outline" onclick="app.resetFilters(true)">Reset</button>
+                    <button type="button" class="btn btn-primary" id="filter-apply" onclick="app.closeFilters()">Show results</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CHECKOUT SHEET ================= -->
+    <div id="order-modal" class="sheet-wrap" hidden>
+        <div class="overlay" onclick="app.closeOrderSummary()"></div>
+        <div class="sheet" id="order-modal-content" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+            <div class="sheet-head">
+                <h2 class="sheet-title" id="checkout-title">Checkout</h2>
+                <button type="button" class="icon-btn" onclick="app.closeOrderSummary()" aria-label="Close checkout" id="checkout-close">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+            </div>
+
+            <div class="sheet-body" id="checkout-body">
+                <div id="checkout-form">
+                    <!-- 1. What you're buying -->
+                    <section class="co-section" aria-labelledby="co-items-title">
+                        <h3 class="co-heading" id="co-items-title"><span class="co-step">1</span> Your order</h3>
+                        <ul class="co-items" id="checkout-items"></ul>
+                        <div class="co-total"><span>Total</span><span id="checkout-total-top"></span></div>
+                    </section>
+
+                    <!-- 2. Contact details -->
+                    <section class="co-section" aria-labelledby="co-contact-title">
+                        <h3 class="co-heading" id="co-contact-title"><span class="co-step">2</span> Your details</h3>
+                        <div class="field">
+                            <label class="field-label" for="modal-name">Name</label>
+                            <input type="text" id="modal-name" class="input" placeholder="Your name" autocomplete="name" maxlength="80" aria-describedby="name-error" oninput="app.clearNameError()">
+                            <p id="name-error" class="field-error" hidden><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>Please enter your name.</p>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="modal-phone">Phone number</label>
+                            <input type="tel" id="modal-phone" class="input" placeholder="012 345 678" inputmode="tel" autocomplete="tel" maxlength="30" aria-describedby="phone-error" oninput="app.clearPhoneError()">
+                            <p id="phone-error" class="field-error" hidden><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span id="phone-error-text">Please enter your phone number.</span></p>
+                        </div>
+                    </section>
+
+                    <!-- 3. Delivery -->
+                    <section class="co-section" aria-labelledby="co-delivery-title">
+                        <h3 class="co-heading" id="co-delivery-title"><span class="co-step">3</span> Delivery</h3>
+                        <div class="radio-cards radio-group" id="delivery-options" role="radiogroup" aria-labelledby="co-delivery-title" aria-describedby="delivery-error"></div>
+                        <p id="delivery-error" class="field-error" hidden><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>Please choose a delivery method.</p>
+
+                        <!-- Standard delivery fields -->
+                        <div id="conditional-fields" class="sub-panel" hidden>
+                            <div class="field">
+                                <span class="field-label" id="company-label">Delivery company</span>
+                                <div class="company-grid" id="company-grid" role="radiogroup" aria-labelledby="company-label" aria-describedby="company-error"></div>
+                                <p id="company-error" class="field-error" hidden><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>Please choose a delivery company.</p>
+                            </div>
+                            <div class="field">
+                                <label class="field-label" for="modal-province">City / Province</label>
+                                <select id="modal-province" class="select"></select>
+                            </div>
+                            <div class="field">
+                                <label class="field-label" for="modal-address">Address <span class="field-optional">(optional)</span></label>
+                                <input type="text" id="modal-address" class="input" placeholder="District, commune, street, house no." autocomplete="street-address" maxlength="200">
+                            </div>
+                        </div>
+
+                        <!-- Grab Express fields -->
+                        <div id="grab-fields" class="sub-panel" hidden>
+                            <div class="field">
+                                <span class="field-label">Delivery location</span>
+                                <button type="button" id="btn-get-location" class="btn btn-outline btn-block" onclick="app.getGrabLocation()">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg> Use my current location
+                                </button>
+                                <p id="location-status" class="field-error" hidden></p>
+                                <div id="map-container" class="map-box" hidden>
+                                    <div id="google-map"></div>
+                                </div>
+                                <p id="map-coords" class="map-coords" hidden></p>
+                                <p id="map-help" class="field-hint" hidden>Drag the pin (or tap the map) to your exact spot, then confirm.</p>
+                                <button type="button" id="btn-confirm-location" class="btn btn-accent btn-block" style="margin-top:12px" onclick="app.confirmGrabLocation()" hidden>Confirm this location</button>
+                                <p id="map-error" class="field-error" hidden><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>Please pin and confirm your location.</p>
+                            </div>
+                        </div>
+
+                        <!-- Store pickup info -->
+                        <p id="pickup-info" class="sub-panel field-hint" hidden style="margin-top:16px">No address needed. The shop will contact you to arrange pickup.</p>
+                    </section>
+
+                    <!-- 4. Note -->
+                    <section class="co-section" aria-labelledby="co-note-title">
+                        <h3 class="co-heading" id="co-note-title"><span class="co-step">4</span> Note to seller <span class="field-optional">&nbsp;(optional)</span></h3>
+                        <label for="modal-note" class="sr-only">Note to seller</label>
+                        <textarea id="modal-note" class="textarea" placeholder="Any special requests?" maxlength="500"></textarea>
+                    </section>
+                </div>
+
+                <!-- Shown after the order is prepared -->
+                <div id="checkout-success" class="success-state" hidden role="status" aria-live="polite" tabindex="-1">
+                    <div class="success-icon"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></div>
+                    <h3 class="page-title" style="font-size:22px" id="success-title">Order received</h3>
+                    <p class="order-id" id="success-order-id"></p>
+                    <p class="state-text" id="success-text"></p>
+                    <button type="button" class="btn btn-primary" style="margin-top:16px" onclick="app.finishOrder()">Continue shopping</button>
+                </div>
+
+                <!-- Old way (used only as a backup): order message opened in a Telegram chat -->
+                <div id="checkout-chat" class="success-state" hidden role="status" aria-live="polite">
+                    <div class="success-icon"><svg class="icon" aria-hidden="true"><use href="#i-telegram"/></svg></div>
+                    <h3 class="page-title" style="font-size:22px">Almost done!</h3>
+                    <p class="state-text">Your order message is ready. <strong>Press Send in the Telegram chat</strong> that opens to place your order.</p>
+                    <div class="spinner" aria-hidden="true"></div>
+                    <p class="field-hint">Opening Telegram…</p>
+                </div>
+            </div>
+
+            <div class="sheet-foot" id="checkout-foot">
+                <div class="order-error" id="order-error" role="alert" hidden>
+                    <p class="order-error-title"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span>Order could not be sent. Please try again.</span></p>
+                    <p class="order-error-detail" id="order-error-detail"></p>
+                    <button type="button" class="btn-link" id="btn-chat-fallback" onclick="app.sendViaTelegramChat()" hidden>
+                        <svg class="icon" aria-hidden="true"><use href="#i-telegram"/></svg> Send it as a Telegram message instead
+                    </button>
+                </div>
+                <div class="checkout-foot-total"><span>Total</span><strong id="checkout-total"></strong></div>
+                <button type="button" class="btn btn-accent btn-block" id="btn-submit-order" onclick="app.submitFinalOrder()">
+                    <span id="btn-submit-label">Place order</span>
+                </button>
+                <p class="checkout-help" id="checkout-help">Your order goes straight to the shop.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast messages ("Added to cart" etc.) -->
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

@@ -1,15 +1,18 @@
 # BRICK STORE — How to edit your store (no coding needed)
 
-Your store is made of a few files. You only ever need to touch **two** of them:
+The website files are in the **`public`** folder. You only ever need to touch **two** of them:
 
 | File | What's inside | Do you edit it? |
 |---|---|---|
-| `products.js` | All your products | **Yes** |
-| `store-config.js` | Home page text, Telegram username, social links, delivery options, provinces | **Yes** |
-| `styles.css` | Colours and look | Only if you want to change colours |
-| `app.js` | How the store works | No |
-| `index.html` | Page structure | No |
-| `manifest.webmanifest`, `icons/` | App icon for "Add to Home Screen" | No (replace the icon pictures if you want) |
+| `public/products.js` | All your products | **Yes** |
+| `public/store-config.js` | Home page text, social links, delivery options, provinces | **Yes** |
+| `public/styles.css` | Colours and look | Only if you want to change colours |
+| `public/app.js`, `public/index.html` | How the store works / page structure | No |
+| `public/manifest.webmanifest`, `public/icons/` | App icon for "Add to Home Screen" | No (replace the icon pictures if you want) |
+| `worker/` | The secure order helper that runs on Cloudflare | No |
+| `wrangler.jsonc` | Cloudflare settings (no passwords) | Rarely |
+
+⚠️ At the very bottom of `products.js` and `store-config.js` there is a line that starts with `if (typeof module`. **Don't delete it** — the order server needs it to check prices.
 
 Open the files with **Notepad** (right-click → Open with → Notepad) or, better, the free **Visual Studio Code**.
 
@@ -17,7 +20,7 @@ Open the files with **Notepad** (right-click → Open with → Notepad) or, bett
 
 ## 1. Change a product
 
-Open `products.js`. Each product looks like this:
+Open `public/products.js`. Each product looks like this:
 
 ```js
 {
@@ -45,7 +48,7 @@ Open `products.js`. Each product looks like this:
 | "Sold out" / "Only 2 left" | add `stock: 0` or `stock: 2` (optional) |
 | A small label like "Limited" | add `badge: "Limited"` (optional) |
 
-**Photos:** either paste a full web link (`https://...`), or put the photo file in the same folder as `index.html` and write just its name, like `"my-shirt.jpg"`. Best: square, about 1000×1000 pixels, JPG or WEBP.
+**Photos:** either paste a full web link (`https://...`), or put the photo file in the `public` folder and write just its name, like `"my-shirt.jpg"`. Best: square, about 1000×1000 pixels, JPG or WEBP.
 
 ### Add a new product
 1. Copy one whole product — from its `{` to its `},`
@@ -65,10 +68,12 @@ Delete everything from its `{` to its `},`.
 
 ## 2. Change store text and settings
 
-Open `store-config.js`:
+Open `public/store-config.js`:
 
 - **Home page title** → `heroTitle`, `heroSubtitle` (optional `heroEyebrow`, `heroImage`)
-- **Who receives orders** → `supportUsername` (your Telegram username, without @)
+- **Your Telegram username** (Contact us + backup ordering) → `supportUsername` (without @)
+- **Message shown after an order** → `orderSuccessText`
+- **Where orders are delivered** → NOT in any file. It's the `TELEGRAM_CHAT_ID` secret in Cloudflare (see SETUP-CLOUDFLARE.md)
 - **About text** → `aboutText`
 - **Facebook / TikTok / Instagram links** → `socialLinks`
 - **Delivery options, companies, provinces** → `deliveryOptions`, `deliveryCompanies`, `provinces`
@@ -79,16 +84,13 @@ Open `store-config.js`:
 
 ## 3. Put the new version online
 
-Your live store only changes when these files are uploaded to where your store is hosted (your GitHub repository).
+1. On the GitHub website, open your repository → go into the `public` folder.
+2. Click the file (for example `products.js`) → click the ✏️ pencil → make your change → **Commit changes**.
+   (To add photos: in the `public` folder click **Add file → Upload files**.)
+3. Cloudflare notices the change and puts it online by itself within 1–2 minutes.
+4. Close the Mini App in Telegram and open it again to see the new version.
 
-On the GitHub website:
-1. Open your repository.
-2. Click **Add file → Upload files**.
-3. Drag in **all** of these: `index.html`, `app.js`, `products.js`, `store-config.js`, `styles.css`, `manifest.webmanifest`, and the whole `icons` folder.
-4. Click **Commit changes**.
-5. Wait 1–2 minutes, then open the store in Telegram. If you still see the old version, close the Mini App completely and open it again.
-
-Do **not** upload the `_backup_original` folder — it's your safety copy of the old store.
+If the new version doesn't appear: Cloudflare → **Workers & Pages → brick-store → Deployments** shows whether the last update worked. A red ❌ usually means a missing comma or quote mark in the file you just edited.
 
 ## 4. Undo everything
-The old store is saved in `_backup_original`. Copy those 3 files back over the new ones to go back.
+The very first version of the store is saved in `_backup_original` on your computer (it is not on GitHub).

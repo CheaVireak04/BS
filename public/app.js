@@ -693,7 +693,6 @@ const app = {
 
         const deliveryList = (this.cfg().deliveryOptions || []).map(d =>
             `<li><strong style="color:var(--text);font-weight:500">${this.esc(d.label || d.value)}</strong>${d.detail ? ` — ${this.esc(d.detail)}` : ''}</li>`).join('');
-        const user = this.esc(this.supportUsername.replace('@', ''));
 
         const c = this.el('product-detail-content');
         if (!c) return;
@@ -730,7 +729,7 @@ const app = {
                     <div class="info-list">
                         <div class="info-item"><h3>Description</h3><p class="desc">${this.esc(p.desc || '')}</p></div>
                         ${deliveryList ? `<div class="info-item"><h3>Delivery options</h3><ul>${deliveryList}</ul></div>` : ''}
-                        <div class="info-item"><h3>How ordering works</h3><p>Checkout opens a Telegram chat with @${user} with your order already written. Send the message to place your order.</p></div>
+                        <div class="info-item"><h3>How ordering works</h3><p>Choose delivery, add your name and phone, and tap Place order. Your order goes straight to the shop, and you'll get an order number.</p></div>
                     </div>
                 </div>
             </div>
@@ -985,7 +984,7 @@ const app = {
                         <div class="summary-row"><span>Delivery</span><strong style="color:var(--text-2);font-weight:400">Choose at checkout</strong></div>
                         <div class="summary-row summary-total"><span>Total</span><strong>${this.money(total)}</strong></div>
                         <button type="button" class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.openOrderSummary()">Checkout</button>
-                        <p class="summary-note">You'll confirm your order in Telegram.</p>
+                        <p class="summary-note">Your order goes straight to the shop.</p>
                     </aside>
                 </div>`;
         } catch (e) {
@@ -1165,8 +1164,21 @@ const app = {
         this.setLocationStatus('');
 
         // Reset errors + values
-        ['delivery-error', 'phone-error', 'grab-phone-error', 'company-error', 'map-error'].forEach(id => { const el = this.el(id); if (el) el.hidden = true; });
-        ['modal-phone', 'modal-address', 'grab-phone', 'modal-note'].forEach(id => { const el = this.el(id); if (el) { el.value = ''; el.removeAttribute('aria-invalid'); } });
+        ['delivery-error', 'name-error', 'phone-error', 'company-error', 'map-error'].forEach(id => { const el = this.el(id); if (el) el.hidden = true; });
+        ['modal-address', 'modal-note'].forEach(id => { const el = this.el(id); if (el) { el.value = ''; el.removeAttribute('aria-invalid'); } });
+        // Name + phone are kept while the store is open (handy if the customer orders again).
+        ['modal-name', 'modal-phone'].forEach(id => { const el = this.el(id); if (el) el.removeAttribute('aria-invalid'); });
+        const nameInput = this.el('modal-name');
+        if (nameInput && !nameInput.value) {
+            // Fill the name from the customer's Telegram profile (they can change it).
+            try {
+                const u = this.tg && this.tg.initDataUnsafe && this.tg.initDataUnsafe.user;
+                if (u) nameInput.value = [u.first_name, u.last_name].filter(Boolean).join(' ').slice(0, 80);
+            } catch (e) {}
+        }
+        // A fresh "order ticket" number. If the customer taps Place order twice, or retries after a
+        // network problem, the server sees the same ticket and never sends the order twice.
+        this.orderKey = this.newOrderKey();
         const prov = this.el('modal-province'); if (prov) prov.selectedIndex = 0;
         this.el('conditional-fields').hidden = true;
         this.el('grab-fields').hidden = true;
@@ -1193,16 +1205,29 @@ const app = {
         // Show form (not the success screen)
         this.el('checkout-form').hidden = false;
         this.el('checkout-success').hidden = true;
+        this.el('checkout-chat').hidden = true;
         this.el('checkout-foot').hidden = false;
-        this.el('btn-submit-order').classList.remove('is-loading');
+        this.setSubmitting(false);
+        this.showOrderError('');
         this.el('checkout-body').scrollTop = 0;
 
         this.openSheet('order-modal');
     },
 
     closeOrderSummary() {
+        if (this.isSubmitting) return; // wait until the order finished sending
         this.haptic('light');
         this.closeSheet('order-modal');
+    },
+
+    newOrderKey() {
+        try {
+            if (window.crypto && crypto.randomUUID) return 'o-' + crypto.randomUUID();
+            const a = new Uint8Array(16); crypto.getRandomValues(a);
+            return 'o-' + [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (e) {
+            return 'o-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+        }
     },
 
     selectDelivery(index) {
@@ -1246,25 +1271,31 @@ const app = {
     },
 
     clearPhoneError() { this.el('phone-error').hidden = true; this.el('modal-phone').removeAttribute('aria-invalid'); },
-    clearGrabPhoneError() { this.el('grab-phone-error').hidden = true; this.el('grab-phone').removeAttribute('aria-invalid'); },
+    clearNameError() { this.el('name-error').hidden = true; this.el('modal-name').removeAttribute('aria-invalid'); },
+    /** Kept for compatibility: Grab now uses the shared phone field. */
+    clearGrabPhoneError() { this.clearPhoneError(); },
 
-    /** Builds the exact order text that is sent to Telegram. */
+    /**
+     * The order message used by the BACKUP plan only (customer sends it in a Telegram chat).
+     * Normally orders are sent automatically by the order server (worker/orders.js).
+     */
     buildOrderMessage(items, total) {
         const d = this.deliveryValue;
         const isStandard = this.deliveryType === 'standard';
         const isGrab = this.deliveryType === 'grab';
         const cur = this.cfg().currencySymbol || '$';
         let msg = `🛒 *NEW ORDER*\nMethod: ${d}\n\n`;
+        msg += `👤 Name: ${this.el('modal-name').value.trim()}\n`;
+        msg += `📞 Phone: ${this.el('modal-phone').value.trim()}\n`;
         if (isStandard) {
             msg += `🏢 Company: ${this.selectedCompany}\n`;
             msg += `📍 Province: ${this.el('modal-province').value}\n`;
             msg += `🏠 Address: ${this.el('modal-address').value.trim() || 'N/A'}\n`;
-            msg += `📞 Phone: ${this.el('modal-phone').value.trim()}\n\n`;
         }
         if (isGrab) {
             msg += `📍 Location: https://www.google.com/maps?q=${this.mapLat},${this.mapLng}\n`;
-            msg += `📞 Phone: ${this.el('grab-phone').value.trim()}\n\n`;
         }
+        msg += `\n`;
         const note = this.el('modal-note').value.trim();
         msg += `📝 Note: ${note || 'None'}\n\n`;
         msg += `📦 *Items:*\n`;
@@ -1273,57 +1304,167 @@ const app = {
         return msg;
     },
 
-    submitFinalOrder() {
-        if (this.isSubmitting) return;
-        this.haptic('medium');
-        let valid = true;
+    /** Checks the form in the browser (the server checks everything again). */
+    validateCheckout() {
         const errors = [];
-        const show = (id, focusEl) => { this.el(id).hidden = false; errors.push(focusEl || this.el(id)); valid = false; };
+        const show = (id, focusEl) => { this.el(id).hidden = false; errors.push(focusEl || this.el(id)); };
 
+        const nameEl = this.el('modal-name'), phoneEl = this.el('modal-phone');
+        if (!nameEl.value.trim()) { nameEl.setAttribute('aria-invalid', 'true'); show('name-error', nameEl); }
+        const phone = phoneEl.value.trim();
+        const digits = phone.replace(/\D/g, '').length;
+        if (!phone || digits < 6 || digits > 15 || !/^[0-9+()\-.\s]+$/.test(phone)) {
+            this.el('phone-error-text').textContent = phone ? 'Please check your phone number (numbers only, e.g. 012 345 678).' : 'Please enter your phone number.';
+            phoneEl.setAttribute('aria-invalid', 'true'); show('phone-error', phoneEl);
+        }
         if (!this.deliveryType) { this.el('delivery-options').classList.add('has-error'); show('delivery-error', this.el('delivery-options')); }
-        const isStandard = this.deliveryType === 'standard';
-        const isGrab = this.deliveryType === 'grab';
-
-        if (isStandard) {
-            if (!this.selectedCompany) { this.el('company-grid').classList.add('has-error'); show('company-error', this.el('company-grid')); }
-            if (!this.el('modal-phone').value.trim()) { this.el('modal-phone').setAttribute('aria-invalid', 'true'); show('phone-error', this.el('modal-phone')); }
+        if (this.deliveryType === 'standard' && !this.selectedCompany) { this.el('company-grid').classList.add('has-error'); show('company-error', this.el('company-grid')); }
+        if (this.deliveryType === 'grab' && !this.isLocationConfirmed) {
+            show('map-error', this.el('btn-confirm-location').hidden ? this.el('btn-get-location') : this.el('btn-confirm-location'));
         }
-        if (isGrab) {
-            if (!this.isLocationConfirmed) show('map-error', this.el('btn-confirm-location').hidden ? this.el('btn-get-location') : this.el('btn-confirm-location'));
-            if (!this.el('grab-phone').value.trim()) { this.el('grab-phone').setAttribute('aria-invalid', 'true'); show('grab-phone-error', this.el('grab-phone')); }
-        }
-        if (!valid) {
+        if (errors.length) {
             this.haptic('heavy');
             try { this.tg?.HapticFeedback?.notificationOccurred?.('error'); } catch (e) {}
             const first = errors[0];
-            if (first) {
-                try { first.scrollIntoView({ behavior: this.prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' }); } catch (e) {}
-                if (first.tagName === 'INPUT') setTimeout(() => first.focus({ preventScroll: true }), 250);
-            }
-            return;
+            try { first.scrollIntoView({ behavior: this.prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' }); } catch (e) {}
+            if (first.tagName === 'INPUT') setTimeout(() => first.focus({ preventScroll: true }), 250);
+            return false;
         }
+        return true;
+    },
 
-        // Compile order data (snapshot taken when checkout opened)
+    orderItemsAndTotal() {
         const items = this.pendingOrderItems.length ? this.pendingOrderItems : this.getOrderItems(this.pendingOrderProductId);
         let total = 0;
         items.forEach(i => total += Number(i.cartPrice || i.price) * (i.quantity || 1));
-        const msg = this.buildOrderMessage(items, total);
-        this.lastOrderMessage = msg;
-        this.isSubmitting = true;
+        return { items, total: Math.round(total * 100) / 100 };
+    },
 
-        // Success screen
-        this.el('btn-submit-order').classList.add('is-loading');
+    setSubmitting(on) {
+        this.isSubmitting = on;
+        const btn = this.el('btn-submit-order');
+        btn.disabled = on;
+        btn.classList.toggle('is-loading', on);
+        if (on) btn.setAttribute('aria-busy', 'true'); else btn.removeAttribute('aria-busy');
+        this.el('btn-submit-label').textContent = on ? 'Sending order…' : (this.orderFailed ? 'Try again' : 'Place order');
+        const close = this.el('checkout-close'); if (close) close.disabled = on;
+    },
+
+    showOrderError(detail, allowFallback) {
+        const box = this.el('order-error');
+        if (!detail && detail !== null) { box.hidden = true; this.orderFailed = false; return; }
+        this.orderFailed = true;
+        box.hidden = false;
+        this.el('order-error-detail').textContent = detail || '';
+        this.el('btn-chat-fallback').hidden = !(allowFallback && this.cfg().allowChatFallback !== false && this.supportUsername);
+        try { this.tg?.HapticFeedback?.notificationOccurred?.('error'); } catch (e) {}
+        try { box.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+    },
+
+    /** "Place order": sends the order to the secure order server, which forwards it to Telegram. */
+    async submitFinalOrder() {
+        if (this.isSubmitting) return;               // already sending — ignore extra taps
+        this.haptic('medium');
+        this.showOrderError('');
+        if (!this.validateCheckout()) return;
+
+        const { items, total } = this.orderItemsAndTotal();
+        const payload = {
+            orderKey: this.orderKey || (this.orderKey = this.newOrderKey()),
+            initData: (this.tg && this.tg.initData) || '',
+            customer: { name: this.el('modal-name').value.trim(), phone: this.el('modal-phone').value.trim() },
+            delivery: {
+                type: this.deliveryType,
+                method: this.deliveryValue,
+                company: this.deliveryType === 'standard' ? this.selectedCompany : undefined,
+                province: this.deliveryType === 'standard' ? this.el('modal-province').value : undefined,
+                address: this.deliveryType === 'standard' ? this.el('modal-address').value.trim() : undefined,
+                location: this.deliveryType === 'grab' ? { lat: this.mapLat, lng: this.mapLng } : undefined
+            },
+            note: this.el('modal-note').value.trim(),
+            items: items.map(i => ({ id: i.id, variant: (i.variant && i.variant.name) || 'Standard', quantity: i.quantity || 1 })),
+            clientTotal: total
+        };
+
+        this.setSubmitting(true);
+        let res = null, data = null;
+        const controller = window.AbortController ? new AbortController() : null;
+        const timer = setTimeout(() => controller && controller.abort(), 20000);
+        try {
+            res = await fetch(this.cfg().orderApiUrl || '/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller ? controller.signal : undefined
+            });
+            data = await res.json().catch(() => null);
+        } catch (err) {
+            res = null;
+        } finally {
+            clearTimeout(timer);
+        }
+        this.setSubmitting(false);
+
+        if (res && res.ok && data && data.ok) {
+            this.orderSucceeded(data.orderId);
+            return;
+        }
+
+        // Something went wrong: say so honestly and let the customer try again.
+        let detail;
+        let fallback = true;
+        if (!res) detail = 'Check your internet connection. Your cart is still saved.';
+        else if (data && data.message && res.status >= 400 && res.status < 500 && res.status !== 404) {
+            detail = data.message;
+            fallback = res.status === 403 || res.status === 429;
+            if (data.error === 'invalid_phone') { this.el('modal-phone').setAttribute('aria-invalid', 'true'); }
+        } else detail = 'The shop\'s order system did not answer. Your cart is still saved.';
+        this.showOrderError(detail, fallback);
+        this.setSubmitting(false);
+    },
+
+    orderSucceeded(orderId) {
+        try { this.tg?.HapticFeedback?.notificationOccurred?.('success'); } catch (e) {}
+        this.lastOrderId = orderId;
+        this.orderKey = null;
+        this.orderFailed = false;
+        this.el('success-order-id').textContent = orderId ? `Order #${orderId}` : '';
+        this.el('success-order-id').hidden = !orderId;
+        this.el('success-text').textContent = this.cfg().orderSuccessText || 'The shop has received your order.';
         this.el('checkout-form').hidden = true;
         this.el('checkout-foot').hidden = true;
         this.el('checkout-success').hidden = false;
         this.el('checkout-body').scrollTop = 0;
-        try { this.tg?.HapticFeedback?.notificationOccurred?.('success'); } catch (e) {}
+        try { this.el('checkout-success').focus({ preventScroll: true }); } catch (e) {}
 
-        // Open Telegram with the order
+        // Empty the cart if this was a cart checkout (same as before)
+        if (!this.pendingOrderProductId) {
+            this.cart = [];
+            this.saveCart();
+            if (this.currentView === 'cart') this.renderCart();
+        }
+    },
+
+    finishOrder() {
+        this.closeSheet('order-modal');
+        if (this.currentView === 'cart' && this.cart.length === 0) this.navigate('home');
+    },
+
+    /** BACKUP plan (the old way): open a Telegram chat with the order already written. */
+    sendViaTelegramChat() {
+        if (this.isSubmitting) return;
+        if (!this.validateCheckout()) return;
+        const { items, total } = this.orderItemsAndTotal();
+        const msg = this.buildOrderMessage(items, total);
+        this.lastOrderMessage = msg;
+        this.isSubmitting = true;
+        this.el('checkout-form').hidden = true;
+        this.el('checkout-foot').hidden = true;
+        this.el('checkout-chat').hidden = false;
+
         setTimeout(() => {
             const url = `https://t.me/${this.supportUsername.replace('@', '')}?text=${encodeURIComponent(msg)}`;
             const inTelegram = this.tg && this.tg.initDataUnsafe && Object.keys(this.tg.initDataUnsafe).length > 0;
-
             if (inTelegram) {
                 try {
                     if (this.tg.openTelegramLink) this.tg.openTelegramLink(url);
@@ -1331,24 +1472,17 @@ const app = {
                 } catch (err) {
                     window.location.href = url;
                 }
-                // Close the Mini App so the customer lands in the pre-filled chat
                 setTimeout(() => { try { this.tg.close(); } catch (e) {} }, 300);
             } else {
                 window.location.href = url;
             }
-
-            // Empty the cart if this was a cart checkout (same as before)
             if (!this.pendingOrderProductId) {
                 this.cart = [];
                 this.saveCart();
                 this.renderCart();
             }
-
-            setTimeout(() => {
-                this.closeOrderSummary();
-                this.isSubmitting = false;
-            }, 800);
-        }, 1800);
+            setTimeout(() => { this.isSubmitting = false; this.closeSheet('order-modal'); }, 800);
+        }, 1200);
     },
 
     // =========================================================

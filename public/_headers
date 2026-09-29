@@ -1,0 +1,19 @@
+# Extra safety rules for every page of the website
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=()
+
+# Product/settings files: always check for a newer version, so price changes show up quickly
+/products.js
+  Cache-Control: no-cache
+/store-config.js
+  Cache-Control: no-cache
+/app.js
+  Cache-Control: no-cache
+/styles.css
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache

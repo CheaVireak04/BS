@@ -1,0 +1,5 @@
+# For testing on your own computer only (advanced, optional).
+# Copy this file to ".dev.vars" and fill in a TEST bot. ".dev.vars" is never uploaded to GitHub.
+# NEVER put your real token in any other file.
+TELEGRAM_BOT_TOKEN=put-a-test-bot-token-here
+TELEGRAM_CHAT_ID=put-your-chat-id-here
