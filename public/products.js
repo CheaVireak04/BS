@@ -41,8 +41,8 @@
 const products = [
     {
         id: 1, category: "Fixed blade", name: "Karambit Doppler", price: 12, oldPrice: 15,
-        image: "public/assets/Lork.PNG",
-        gallery: ["public/assets/Lork.PNG"],
+        image: "public/assets/Lux.JPEG",
+        gallery: ["public/assets/Lux.JPEG"],
         desc: "Premium replica desk toy. Deep sapphire phases.",
         dateAdded: "2026-03-01", clicks: 450, sales: 85,
         tags: ["knife", "doppler", "sapphire", "curved", "blue"],
