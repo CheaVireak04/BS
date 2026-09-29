@@ -40,7 +40,7 @@
 
 const products = [
     {
-        id: 1, category: "Fixed blade", name: "Karambit Doppler", price: 12, oldPrice: 15,
+        id: 1, category: "Fixed blade", name: "BHQ ក្តិតធំ (តម្លៃគិតក្នុង១យប់)", price: 12, oldPrice: 15,
         image: "assets/Lux.JPEG",
         gallery: ["assets/Lux.JPEG"],
         desc: "Premium replica desk toy. Deep sapphire phases.",
@@ -49,9 +49,9 @@ const products = [
         variants: [{ name: "Standard Phase 3", price: 12 }, { name: "Sapphire Edition", price: 18 }]
     },
     {
-        id: 2, category: "Fixed blade", name: "Karambit Fade", price: 12, oldPrice: 15,
-        image: "https://cdn.skinport.com/cdn-cgi/image/width=512,height=384,fit=pad,format=avif,quality=85,background=transparent/images/screenshots/609453843/playside.png",
-        gallery: ["https://cdn.skinport.com/cdn-cgi/image/width=512,height=384,fit=pad,format=avif,quality=85,background=transparent/images/screenshots/609453843/playside.png"],
+        id: 2, category: "Fixed blade", name: "បុរសសាច់ដុំ (តម្លៃគិតក្នុង១យប់)", price: 12, oldPrice: 15​,
+        image: "assets/Lork.PNG",
+        gallery: ["assets/Lork.PNG"],
         desc: "Premium replica desk toy. 100% fade pattern.",
         dateAdded: "2026-03-02", clicks: 600, sales: 120,
         tags: ["knife", "fade", "gradient", "curved"],
